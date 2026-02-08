@@ -11,20 +11,16 @@ def get_video():
         url = request.json.get('url')
         
         ydl_opts = {
-            # Forces the "Web" client which is more stable for links
-            'format': '18/best[vcodec!=none][acodec!=none]',
+            'format': '18/best', # Force 360p combined file
             'quiet': True,
             'no_check_certificate': True,
-            # This is the "Magic" part: it uses the iOS client identity
-            # which YouTube currently challenges less than Desktop
+            # MAGIC FIX: Use the 'Android' client identity specifically
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['ios'],
+                    'player_client': ['android'],
+                    'player_skip': ['webpage', 'configs'],
                 }
             },
-            'http_headers': {
-                'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4.1 Mobile/15E148 Safari/604.1'
-            }
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
