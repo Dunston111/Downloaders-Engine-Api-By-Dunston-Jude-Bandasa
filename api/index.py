@@ -18,15 +18,17 @@ def get_video():
                 with open(t_path, 'w') as t: t.write(f.read())
 
         # Minimal options to prevent timeout
-        ydl_opts = {
-            'format': '18', 
-            'cookiefile': t_path,
+       ydl_opts = {
+            'format': 'best',
+            'cookiefile': temp_cookie_path,
             'quiet': True,
             'no_check_certificate': True,
-            'skip_download': True,
-            'lazy_playlist': True,
-            'youtube_include_dash_manifest': False,
-            'youtube_include_hls_manifest': False,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['android'], # 'web' is what's failing, use android
+                    'player_skip': ['configs', 'webpage']
+                }
+            }
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -39,3 +41,4 @@ def get_video():
             })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
+
