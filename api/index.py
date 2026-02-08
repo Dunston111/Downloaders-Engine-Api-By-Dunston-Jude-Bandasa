@@ -11,26 +11,28 @@ def get_video():
     try:
         url = request.json.get('url')
         
-        # 1. Locate the original cookie file
+        # 1. Read the cookie file from your app folder
         current_dir = os.path.dirname(os.path.abspath(__file__))
         original_cookie_path = os.path.join(current_dir, 'cookies.txt')
         
-        # 2. Vercel only allows writing to /tmp
-        # We copy the content there so yt-dlp can "use" it without Permission errors
+        # 2. Copy it to /tmp (The only writable area in Vercel)
         temp_cookie_path = "/tmp/cookies.txt"
-        
         with open(original_cookie_path, 'r') as f:
-            cookie_content = f.read()
-        
+            data = f.read()
         with open(temp_cookie_path, 'w') as f:
-            f.write(cookie_content)
+            f.write(data)
 
         ydl_opts = {
             'format': '18', 
-            'cookiefile': temp_cookie_path, # Use the writable version
+            'cookiefile': temp_cookie_path, # Point to the writable copy
             'quiet': True,
             'no_check_certificate': True,
-            'extractor_args': {'youtube': {'player_client': ['ios']}}
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['ios'],
+                    'player_skip': ['configs', 'webpage']
+                }
+            }
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
