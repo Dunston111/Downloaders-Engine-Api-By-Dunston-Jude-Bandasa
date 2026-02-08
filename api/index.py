@@ -19,13 +19,15 @@ def get_video():
 
         # Minimal options to prevent timeout
        ydl_opts = {
-            'format': 'best',
+            # 'best' finds the highest quality file that is ALREADY merged (no ffmpeg needed)
+            # This avoids the "Format not available" error.
+            'format': 'best[ext=mp4]/best', 
             'cookiefile': temp_cookie_path,
             'quiet': True,
             'no_check_certificate': True,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['android'], # 'web' is what's failing, use android
+                    'player_client': ['android'],
                     'player_skip': ['configs', 'webpage']
                 }
             }
@@ -41,4 +43,5 @@ def get_video():
             })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
+
 
