@@ -11,32 +11,37 @@ def get_video():
     try:
         url = request.json.get('url')
         
+        # Fast pathing
         current_dir = os.path.dirname(os.path.abspath(__file__))
         original_cookie_path = os.path.join(current_dir, 'cookies.txt')
         temp_cookie_path = "/tmp/cookies.txt"
         
-        # Read/Write to /tmp to bypass Vercel's read-only lock
-        with open(original_cookie_path, 'r') as f:
-            data = f.read()
-        with open(temp_cookie_path, 'w') as f:
-            f.write(data)
+        # Only write if it doesn't exist to save precious milliseconds
+        if not os.path.exists(temp_cookie_path):
+            with open(original_cookie_path, 'r') as f:
+                data = f.read()
+            with open(temp_cookie_path, 'w') as f:
+                f.write(data)
 
-       ydl_opts = {
-            'format': 'best',
+        ydl_opts = {
+            'format': '18/best', # 18 is the fastest to find
             'cookiefile': temp_cookie_path,
             'quiet': True,
             'no_check_certificate': True,
+            'no_warnings': True,
+            # CRITICAL: Skip extracting the "whole" page, just get the URL
+            'extract_flat': False, 
+            'force_generic_extractor': False,
             'extractor_args': {
                 'youtube': {
-                    # REMOVED 'web' - strictly use mobile clients
-                    'player_client': ['android', 'ios'],
+                    'player_client': ['ios'], # iOS is the fastest handshake
+                    'player_skip': ['webpage', 'configs']
                 }
-            },
-            # This forces yt-dlp to pretend it's a very specific modern phone
-            'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'
+            }
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # We fetch ONLY the basic info to beat the 10s timer
             info = ydl.extract_info(url, download=False)
             return jsonify({
                 'success': True,
@@ -46,4 +51,3 @@ def get_video():
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
-
