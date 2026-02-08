@@ -9,7 +9,6 @@ CORS(app)
 def get_video():
     try:
         url = request.json.get('url')
-        # Fast-track cookie path
         c_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
         t_path = "/tmp/cookies.txt"
 
@@ -17,25 +16,21 @@ def get_video():
             with open(c_path, 'r') as f:
                 with open(t_path, 'w') as t: t.write(f.read())
 
-        # Minimal options to prevent timeout
-       ydl_opts = {
-            # 'best' finds the highest quality file that is ALREADY merged (no ffmpeg needed)
-            # This avoids the "Format not available" error.
-            'format': 'best[ext=mp4]/best', 
-            'cookiefile': temp_cookie_path,
+        ydl_opts = {
+            'format': 'best', 
+            'cookiefile': t_path,
             'quiet': True,
             'no_check_certificate': True,
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['android'],
-                    'player_skip': ['configs', 'webpage']
-                }
-            }
+            # ULTRA SPEED: Don't check for subtitles, chapters, or related clips
+            'ignore_playlist': True,
+            'youtube_include_dash_manifest': False,
+            'youtube_include_hls_manifest': False,
+            'no_warnings': True,
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # ie_key='Youtube' speeds up the search
-            info = ydl.extract_info(url, download=False, process=True)
+            # force_generic_extractor can sometimes skip the heavy YouTube handshake
+            info = ydl.extract_info(url, download=False)
             return jsonify({
                 'success': True,
                 'title': info.get('title'),
@@ -43,5 +38,3 @@ def get_video():
             })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
-
-
