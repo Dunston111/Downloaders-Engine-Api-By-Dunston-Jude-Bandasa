@@ -21,18 +21,19 @@ def get_video():
         with open(temp_cookie_path, 'w') as f:
             f.write(data)
 
-        ydl_opts = {
-            # 'best' finds the highest quality file that is ALREADY merged (no ffmpeg needed)
-            'format': 'best', 
+       ydl_opts = {
+            'format': 'best',
             'cookiefile': temp_cookie_path,
             'quiet': True,
             'no_check_certificate': True,
             'extractor_args': {
                 'youtube': {
+                    # REMOVED 'web' - strictly use mobile clients
                     'player_client': ['android', 'ios'],
-                    'player_skip': ['configs', 'webpage']
                 }
-            }
+            },
+            # This forces yt-dlp to pretend it's a very specific modern phone
+            'user_agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -45,3 +46,4 @@ def get_video():
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
+
