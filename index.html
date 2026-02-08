@@ -1,37 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YT DL PRO</title>
+    <title>YT Downloader</title>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .box { background: #111; padding: 30px; border-radius: 20px; width: 350px; border: 1px solid #333; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 20px 0; border-radius: 8px; border: 1px solid #444; background: #222; color: #fff; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; background: #00ff6a; color: #000; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        #res { margin-top: 20px; }
-        a { color: #00ff6a; text-decoration: none; font-weight: bold; border: 1px solid #00ff6a; padding: 10px; display: block; border-radius: 5px; }
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding-top: 50px; }
+        input { width: 300px; padding: 10px; margin-bottom: 10px; }
+        button { padding: 10px 20px; cursor: pointer; background: #ff0000; color: white; border: none; border-radius: 5px; }
+        #status { margin-top: 20px; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h3>Dunston Downloader</h3>
-        <input type="text" id="url" placeholder="Paste YouTube Link">
-        <button onclick="dl()">GET VIDEO</button>
-        <div id="res"></div>
-    </div>
+    <h2>YouTube Downloader</h2>
+    <input type="text" id="url" placeholder="Paste YouTube Link Here">
+    <button onclick="downloadVideo()">Get Download Link</button>
+    <div id="status"></div>
+
     <script>
-        async function dl() {
-            const resDiv = document.getElementById('res');
-            resDiv.innerHTML = "Processing...";
-            const r = await fetch('/get-video', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({url: document.getElementById('url').value})
-            });
-            const d = await r.json();
-            if(d.success) {
-                resDiv.innerHTML = `<p>${d.title}</p><a href="${d.download_url}" target="_blank">DOWNLOAD NOW</a>`;
-            } else { resDiv.innerHTML = "Error: " + d.error; }
+        // UPDATE THIS URL WITH YOUR NGROK LINK
+        const BACKEND_URL = 'https://YOUR-NGROK-ID.ngrok-free.app/get-video';
+
+        async function downloadVideo() {
+            const urlInput = document.getElementById('url').value;
+            const status = document.getElementById('status');
+            
+            status.innerText = "Processing... check your laptop terminal.";
+
+            try {
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: urlInput })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    status.innerHTML = `<a href="${data.download_url}" target="_blank">Click here to open/download video</a>`;
+                    // Automatically open in new tab
+                    window.open(data.download_url, '_blank');
+                } else {
+                    status.innerText = "Error: " + data.error;
+                }
+            } catch (err) {
+                status.innerText = "Check if your laptop server and ngrok are running!";
+            }
         }
     </script>
 </body>
