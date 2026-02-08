@@ -1,5 +1,4 @@
-import os
-import yt_dlp
+import os, yt_dlp
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -10,44 +9,33 @@ CORS(app)
 def get_video():
     try:
         url = request.json.get('url')
-        
-        # Fast pathing
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        original_cookie_path = os.path.join(current_dir, 'cookies.txt')
-        temp_cookie_path = "/tmp/cookies.txt"
-        
-        # Only write if it doesn't exist to save precious milliseconds
-        if not os.path.exists(temp_cookie_path):
-            with open(original_cookie_path, 'r') as f:
-                data = f.read()
-            with open(temp_cookie_path, 'w') as f:
-                f.write(data)
+        # Fast-track cookie path
+        c_path = os.path.join(os.path.dirname(__file__), 'cookies.txt')
+        t_path = "/tmp/cookies.txt"
 
+        if not os.path.exists(t_path):
+            with open(c_path, 'r') as f:
+                with open(t_path, 'w') as t: t.write(f.read())
+
+        # Minimal options to prevent timeout
         ydl_opts = {
-            'format': '18/best', # 18 is the fastest to find
-            'cookiefile': temp_cookie_path,
+            'format': '18', 
+            'cookiefile': t_path,
             'quiet': True,
             'no_check_certificate': True,
-            'no_warnings': True,
-            # CRITICAL: Skip extracting the "whole" page, just get the URL
-            'extract_flat': False, 
-            'force_generic_extractor': False,
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['ios'], # iOS is the fastest handshake
-                    'player_skip': ['webpage', 'configs']
-                }
-            }
+            'skip_download': True,
+            'lazy_playlist': True,
+            'youtube_include_dash_manifest': False,
+            'youtube_include_hls_manifest': False,
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # We fetch ONLY the basic info to beat the 10s timer
-            info = ydl.extract_info(url, download=False)
+            # ie_key='Youtube' speeds up the search
+            info = ydl.extract_info(url, download=False, process=True)
             return jsonify({
                 'success': True,
                 'title': info.get('title'),
                 'download_url': info.get('url')
             })
-
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
