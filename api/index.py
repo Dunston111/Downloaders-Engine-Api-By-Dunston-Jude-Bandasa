@@ -11,22 +11,17 @@ def get_video():
     try:
         url = request.json.get('url')
         
-        # Vercel path logic: look for cookies.txt in the root project folder
-        # '..' goes up one level from the /api folder
-        cookie_path = os.path.join(os.path.dirname(__file__), '..', 'cookies.txt')
+        # Get the directory where index.py actually lives
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        # Look for cookies.txt in the same folder as this script
+        cookie_path = os.path.join(current_dir, 'cookies.txt')
 
         ydl_opts = {
-            'format': '18',  # Best combined MP4 (360p) for serverless
+            'format': '18', 
             'cookiefile': cookie_path,
             'quiet': True,
-            'no_warnings': True,
-            'nocheckcertificate': True,
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['android', 'web'],
-                    'player_skip': ['configs', 'webpage']
-                }
-            }
+            'no_check_certificate': True,
+            'extractor_args': {'youtube': {'player_client': ['ios']}}
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -39,5 +34,3 @@ def get_video():
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 400
-
-app = app
