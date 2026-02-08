@@ -1,6 +1,7 @@
+import os
+import yt_dlp
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import yt_dlp
 
 app = Flask(__name__)
 CORS(app)
@@ -10,17 +11,22 @@ def get_video():
     try:
         url = request.json.get('url')
         
+        # Vercel path logic: look for cookies.txt in the root project folder
+        # '..' goes up one level from the /api folder
+        cookie_path = os.path.join(os.path.dirname(__file__), '..', 'cookies.txt')
+
         ydl_opts = {
-            'format': '18/best', # Force 360p combined file
+            'format': '18',  # Best combined MP4 (360p) for serverless
+            'cookiefile': cookie_path,
             'quiet': True,
-            'no_check_certificate': True,
-            # MAGIC FIX: Use the 'Android' client identity specifically
+            'no_warnings': True,
+            'nocheckcertificate': True,
             'extractor_args': {
                 'youtube': {
-                    'player_client': ['android'],
-                    'player_skip': ['webpage', 'configs'],
+                    'player_client': ['android', 'web'],
+                    'player_skip': ['configs', 'webpage']
                 }
-            },
+            }
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
